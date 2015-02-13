@@ -18,15 +18,21 @@ Inspired by [Turret, a platform to automatedly test distributed systems as appli
 
 ### Planning
 
- * Get familiar with Mininet interfaces
+ * Get familiar with Mininet standard interfaces
  * Abstract the controllers (in terms of ?) with Ryu as an example
  * Think about how to test the given SDN controller in Mininet
-   * in what environment
+   * in what environment (context)
    * for which functionality
    * how to automate
  * Generalize the findings to a tool
 
+### Sprints
+
+TBD.
+
 ## Conclusion
+
+TBD.
 
 ## People
 
