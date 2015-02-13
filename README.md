@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The past few years witnessed the increasing popularity of software-defined networking (SDN). While today many software developers are working on new SDN controllers and and switches, it seems there are few achievements regarding testing those programs in a comprehensive and convenient manner.
+The past few years witnessed the increasing popularity of software-defined networking (SDN). While today many software developers are working on new SDN controllers and and switches, it seems there are few achievements regarding testing those programs in a comprehensive, convenient, and probably "universal" manner.
 
 Inspired by [Turret, a platform to automatedly test distributed systems as applications](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6888941), we want to explore how to test SDN controllers and switches in automated ways.
 
@@ -12,14 +12,14 @@ Inspired by [Turret, a platform to automatedly test distributed systems as appli
 
 [Ryu](http://osrg.github.io/ryu/) is an actively-developed (whereas [Nox](http://noxrepo.org/) and [Pox](http://www.noxrepo.org/pox/about-pox/) are mostly in stagnation) SDN framework that supports a wide range of SDN protocols (as for OpenFlow, it supports 1.0+) and has built-in support from Mininet. With its well-designed API we may have easier access to the protocols. Besides, we may also be interested in testing Ryu as a SDN controller.
 
-[Docker](http://docker.io). (note: my intuitions tell me I may need it. Not sure.) 
+[Docker](http://docker.io). (note: my intuitions tell me I may need it. Not sure. Or use `qemu-kvm` for full virtualization.) 
 
 ## Stages
 
 ### Planning
 
  * Get familiar with Mininet interfaces
- * Abstract the controllers (in terms of ?) with Ryu as example
+ * Abstract the controllers (in terms of ?) with Ryu as an example
  * Think about how to test the given SDN controller in Mininet
    * in what environment
    * for which functionality
