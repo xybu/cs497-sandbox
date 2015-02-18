@@ -2,9 +2,16 @@
 
 ## Introduction
 
-The past few years witnessed the increasing popularity of software-defined networking (SDN). While today many software developers are working on new SDN controllers and and switches, it seems there are few achievements regarding testing those programs in a comprehensive, convenient, and probably "universal" manner.
+The past few years witnessed the increasing popularity of software-defined networking (SDN). While today many software developers are working on new SDN controllers and and switches, it seems there are few achievements regarding testing those programs in a comprehensive, convenient, and probably "universal" manner, at least in open source community.
 
-Inspired by [Turret, a platform to automatedly test distributed systems as applications](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6888941), we want to explore how to test SDN controllers and switches in automated ways.
+Inspired by Turret[1], a platform to automatedly test distributed systems as applications, we want to explore how to test SDN controllers and switches in automated ways.
+
+### Status Quo
+
+There are commercial tools to test and stress test OpenFlow controllers[2].
+The tests showned in its document are bundled with NEC hardware.
+
+
 
 ### Tools
 
@@ -40,3 +47,8 @@ TBD.
 
 [Cristina Nita-Rotaru](http://homes.cerias.purdue.edu/~crisn/index.html) (supervisor)
 
+## Reference
+
+ * [1] Hyojeong Lee; Seibert, J.; Hoque, E.; Killian, C.; Nita-Rotaru, C., "Turret: A Platform for Automated Attack Finding in Unmodified Distributed System Implementations," Distributed Computing Systems (ICDCS), 2014 IEEE 34th International Conference on , vol., no., pp.660,669, June 30 2014-July 3 2014. [doi: 10.1109/ICDCS.2014.73](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6888941)
+ 
+ * [2] [SDN Controller Testing: Part 1](http://www.necam.com/docs/?id=2709888a-ecfd-4157-8849-1d18144a6dda), white paper from Ixia.
