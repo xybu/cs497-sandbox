@@ -482,7 +482,7 @@ mininet>
 All ping time drops below 0.1 ms since the third round, unlike what 
 we have observed in "Repeating Only" section. Running several more 
 rounds does incur some ping time > 0.1 ms, though. But again, for 
-those rounds we did not see controllers get involved.
+those rounds we did not see controllers get `PacketIn` messages.
 
 ## Repeating 5 times
 
@@ -667,6 +667,9 @@ each message 5 times with 1/6 chance?
 
 ## Repeating with 1/6 Chance
 
+In this part, the malicious controller send a message 5 times with 
+1/6 chance and send the message once with 5/6 chance.
+
 ```bash
 mininet> pingallfull
 *** Ping: testing ping reachability
@@ -728,7 +731,8 @@ h11 -> h00 h01 h10
 mininet> 
 ```
 
-Controllers no longer get involved since the second round. 
+Controllers no longer get `PacketIn` messages since the second 
+round. 
 
 # Comparisons
 
