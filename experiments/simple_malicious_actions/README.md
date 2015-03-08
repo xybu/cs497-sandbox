@@ -1,10 +1,10 @@
 Simple Malicious Action
 =======================
 
-This experiment explores what happens when the network has a malicious
-controller connected, with Ryu framework's `simple_switch_13.py` 
-controller code and mininet's `OVSSwitch` switch code as reference 
-implementations.
+This experiment explores what happens when the network has a 
+malicious controller connected, with Ryu framework's 
+`simple_switch_13.py` controller code and mininet's `OVSSwitch` 
+switch code as reference implementations.
 
 
 # Scenario
@@ -64,9 +64,10 @@ The script `run.sh` automates the setup work:
 
 The script `malicious_ryu_13.py` is a malicious controller based on 
 the original `simple_switch_13.py`. Currently we focus on `PacketIn` 
-event, printing what packet is received, and does malicious work 
-before the packet gets sent to its destination. The message is not 
-modified (may explore later).
+event (http://ryu.readthedocs.org/en/latest/ofproto_v1_2_ref.
+html#packet-in-message), printing what packet is received, and does 
+malicious work before the packet gets sent to its destination. The 
+message is not modified (may explore later).
 
 There are two types of malicious actions: (1) delaying `send_msg`
 call, and (2) calling `send_msg` zero or more time. To separate 
@@ -730,11 +731,50 @@ mininet>
 
 Controllers no longer get involved since the second round. 
 
-# Observations
+# Comparisons
 
  * Comparing "Repeating with 1/6 Chance" section with "Dropping
-   Only" section, Dropping a message is more disastrous in that it fail the ping, but the ping failure does not have noticeable
+   Only" section, Dropping a message is more disastrous in that it fails the ping, but the ping failure does not have noticeable
    effect on the next `pingallfull` round.
+
+ * Comparing "Baseline" and "Delaying Only" sections, an expected 
+   delay of 0.5 second with 50% chance (that is, each message is 
+   expected to be delayed for 0.25 second) results in way longer
+   real delay than the injected delay.
+
+ * Comparing "Repeating 5 times" (expected delivery: 0.5*1 + 0.5*5 
+   = 3 times / msg) and "Repeating Only" (expected delivery: 0.5*1 + 
+   1/6 + 5/6 = 1.5 times / msg; dropping allowed) sections with 
+   "Baseline" section (expected delivery = 1 time / msg), more 
+   repetition in message delivery results in negligible increase in 
+   ping time. However, there are two outliers: `h01->h10` in 
+   "Repeating 5 times" (almost tripled) and `h10-h11` in "Repeating 
+   Only" (message dropping failed the ping).
+
+ * As long as the malicious controller misbehave, consecutive 
+   `pingallfull`s can no longer reach the optimal response time
+   observed in "Baseline".
 
 # Analysis and Questions
 
+ * OVSSwitch has good ability to "learn" datapaths. As long as the 
+   path can be established and there is no drastic change on the destination, a malicious controller cannot do much. For better message intercepting, we might need a malicious switch.
+
+ * There is a question about the second and third rounds of 
+   `pingallfull`s. Why can't the switches and hosts fully recover 
+   from the malicious actions when they seem not to be interacting 
+   with the malicious controller? 
+
+    * Is there anything done outside `PacketIn` event? But even so, 
+      since there is no malicious action buried outside `PacketIn`, 
+      the ping time should still recover to the baseline values 
+      (_t_ < 0.1). However, we consistently got _t_ >= 0.1.
+
+ * We may need to add more event handlers to observe what is 
+   happening.
+
+# Links
+
+ * For convenience, the event API of Ryu is described in webpage
+   http://ryu.readthedocs.org/en/latest/ryu_app_api.html and 
+   http://ryu.readthedocs.org/en/latest/ofproto_ref.html#ofproto-ref.
