@@ -64,10 +64,9 @@ The script `run.sh` automates the setup work:
 
 The script `malicious_ryu_13.py` is a malicious controller based on 
 the original `simple_switch_13.py`. Currently we focus on `PacketIn` 
-event (http://ryu.readthedocs.org/en/latest/ofproto_v1_2_ref.
-html#packet-in-message), printing what packet is received, and does 
-malicious work before the packet gets sent to its destination. The 
-message is not modified (may explore later).
+event (http://ryu.readthedocs.org/en/latest/ofproto_v1_2_ref.html#packet-in-message),
+printing what packet is received, and does malicious work before the packet gets sent
+to its destination. The message is not modified (may explore later).
 
 There are two types of malicious actions: (1) delaying `send_msg`
 call, and (2) calling `send_msg` zero or more time. To separate 
@@ -772,6 +771,8 @@ Controllers no longer get involved since the second round.
 
  * We may need to add more event handlers to observe what is 
    happening.
+
+ * We may also explore what happens when the message gets modified.
 
 # Links
 
