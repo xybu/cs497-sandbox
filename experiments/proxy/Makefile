@@ -1,7 +1,7 @@
 SRC_FILES = $(wildcard src/*.cpp)
 SRC_HEADERS = $(wildcard src/*.h)
 GPP = g++
-CFLAGS = -g -O1 -Wall
+CFLAGS = -g -O1 -Wall -pthread -std=gnu++11
 PROGNAME = mproxy
 
 all: $(SRC_FILES) $(SRC_HEADERS)

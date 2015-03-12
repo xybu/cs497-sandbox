@@ -8,12 +8,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <climits>
+#include <thread>
 #include "global.h"
 #include "main.h"
+#include "proxy.h"
 
 unsigned int port_number = DEFAULT_LOCAL_PORT;
 unsigned int rc_port_number = DEFAULT_RC_PORT;
-char *rc_host_name = NULL;
+char rc_host_name[HOST_NAME_MAX + 1] = {0};
 char *profile_path = NULL;
 
 void print_usage(const char *prog_name) {
@@ -32,7 +35,6 @@ void print_usage(const char *prog_name) {
 void parse_port_number(char *arg) {
 	port_number = atoi(arg);
 	if (port_number > MAX_PORT) {
-		// dprintf("max port is %d.\n", MAX_PORT);
 		die("Invalid port number \"%u\".\n", port_number);
 	}
 }
@@ -43,10 +45,11 @@ void parse_target_addr(char *arg) {
 		die("Invalid target address \"%s\": port is missing.\n", arg);
 	}
 	*delim = '\0';
-	rc_host_name = strdup(arg);
+	memcpy(rc_host_name, arg, delim - arg);
 	rc_port_number = atoi(delim + 1);
-	if (rc_port_number > MAX_PORT)
+	if (rc_port_number > MAX_PORT) {
 		die("Invalid target port number \"%u\".\n", rc_port_number);
+	}
 }
 
 void parse_profile_path(char *arg) {
@@ -80,15 +83,21 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	printf("port number: %u\n", port_number);
-	printf("target addr: %s:%u\n", rc_host_name, rc_port_number);
-	printf("load profile: %s\n", profile_path);
+	// load default host name for remote controller, if missing
+	if (rc_host_name[0] == '\0') {
+		memcpy(rc_host_name, DEFAULT_RC_HOST, DEFAULT_RC_HOST_LEN);
+	}
 
+	dprintf("port number: %u\n", port_number);
+	dprintf("target addr: %s:%u\n", rc_host_name, rc_port_number);
+	dprintf("load profile: %s\n", profile_path);
 
+	Proxy proxy(port_number);
+	proxy.set_server(rc_host_name, rc_port_number);
+	proxy.process_requests();
 
-
-	
-	free(rc_host_name);
+	//std::thread upstream_thread(&UpstreamHandler::process_requests, &upstream_handler);
+	//upstream_thread.join();
 
 	return 0;
 }
