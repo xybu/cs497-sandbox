@@ -1,12 +1,10 @@
 /**
  * main.cpp
- * Main function of the program.
+ * The main function.
  * 
  * @author	Xiangyu Bu <xb@purdue.edu>
  */
 
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <climits>
 #include <thread>
@@ -14,90 +12,83 @@
 #include "main.h"
 #include "proxy.h"
 
-unsigned int port_number = DEFAULT_LOCAL_PORT;
-unsigned int rc_port_number = DEFAULT_RC_PORT;
-char rc_host_name[HOST_NAME_MAX + 1] = {0};
-char *profile_path = NULL;
-
 void print_usage(const char *prog_name) {
 	printf("usage: %s [-p PORT] [-t HOST:PORT] [-f PROFILE] [-h]\n" \
 			"\noptional arguments:\n\n" \
 			"  -p PORT, --port PORT            \tport number to use.\n" \
 			"                                  \tdefault: %d.\n" \
 			"  -t HOST:PORT, --target HOST:PORT\taddress to the remote controller.\n" \
-			"                                  \tdefault: 127.0.0.1:6634\n" \
+			"                                  \tdefault: %s:%d\n" \
 			"  -f PROFILE, --profile PROFILE   \tthe protocol profile to load.\n" \
 			"                                  \tdefault: omit\n" \
 			"  -h, --help                      \tshow this help message and exit.\n", 
-			prog_name, DEFAULT_LOCAL_PORT);
+			prog_name, DEFAULT_PORT, DEFAULT_FW_HOST, DEFAULT_FW_PORT);
 }
 
-void parse_port_number(char *arg) {
-	port_number = atoi(arg);
-	if (port_number > MAX_PORT) {
-		die("Invalid port number \"%u\".\n", port_number);
+void parse_port_num(char *arg, unsigned int *val) {
+	*val = atoi(arg);
+	if (!is_valid_port(*val)) {
+		die("Invalid port number \"%u\".\n", *val);
 	}
+	dprintf("Parsed port: %u.\n", *val);
 }
 
-void parse_target_addr(char *arg) {
+void parse_fw_host(char *arg, char *hostname, unsigned int *port) {
 	char *delim = strchr(arg, ':');
 	if (delim == NULL) {
-		die("Invalid target address \"%s\": port is missing.\n", arg);
+		die("Invalid forward address \"%s\": port is missing.\n", arg);
 	}
 	*delim = '\0';
-	memcpy(rc_host_name, arg, delim - arg);
-	rc_port_number = atoi(delim + 1);
-	if (rc_port_number > MAX_PORT) {
-		die("Invalid target port number \"%u\".\n", rc_port_number);
-	}
+	memcpy(hostname, arg, delim - arg);
+	dprintf("Parsed hostname: \"%s\".\n", hostname);
+	parse_port_num(delim + 1, port);
 }
 
-void parse_profile_path(char *arg) {
-	profile_path = arg;
+void parse_profile(char *arg) {
+
 }
 
 int main(int argc, char **argv) {
 	int i;
-	char **tmp;
+	unsigned int port = DEFAULT_PORT, fw_port = DEFAULT_FW_PORT;
+	char fw_host[HOST_NAME_MAX + 1] = DEFAULT_FW_HOST;
+	char **tmp, *arg;
 
 	// parse command-line arguments
 	for (i = 0, tmp = argv; i < argc; ++i, ++tmp) {
-		if (!memcmp(*tmp, "-h", 2)) {
+		arg = *tmp;
+		if (!memcmp(arg, "-h", 2)) {
 			print_usage(argv[0]);
 			return 0;
-		} else if (!memcmp(*tmp, "-p", 3) || !memcmp(*tmp, "--port", 7)) {
+		} else if (!memcmp(arg, "-p", 3) || !memcmp(arg, "--port", 7)) {
 			++tmp, ++i;
-			parse_port_number(*tmp);
-		} else if (!memcmp(*tmp, "--port=", 7)) {
-			parse_port_number(*tmp + 7);
-		} else if (!memcmp(*tmp, "-t", 3) || !memcmp(*tmp, "--target", 9)) {
+			arg = *tmp;
+			parse_port_num(arg, &port);
+		} else if (!memcmp(arg, "--port=", 7)) {
+			parse_port_num(arg + 7, &port);
+		} else if (!memcmp(arg, "-t", 3) || !memcmp(arg, "--target", 9)) {
 			++tmp, ++i;
-			parse_target_addr(*tmp);
-		} else if (!memcmp(*tmp, "--target=", 9)) {
-			parse_target_addr(*tmp + 9);
-		} else if (!memcmp(*tmp, "-f", 3) || !memcmp(*tmp, "--profile", 10)) {
+			arg = *tmp;
+			parse_fw_host(arg, fw_host, &fw_port);
+		} else if (!memcmp(arg, "--target=", 9)) {
+			parse_fw_host(arg + 9, fw_host, &fw_port);
+		} else if (!memcmp(arg, "-f", 3) || !memcmp(arg, "--profile", 10)) {
 			++tmp, ++i;
-			parse_profile_path(*tmp);
-		} else if (!memcmp(*tmp, "--profile=", 10)) {
-			parse_profile_path(*tmp + 10);
+			arg = *tmp;
+			parse_profile(arg);
+		} else if (!memcmp(arg, "--profile=", 10)) {
+			parse_profile(arg + 10);
 		}
 	}
 
-	// load default host name for remote controller, if missing
-	if (rc_host_name[0] == '\0') {
-		memcpy(rc_host_name, DEFAULT_RC_HOST, DEFAULT_RC_HOST_LEN);
-	}
+	dprintf("port: %u\n", port);
+	dprintf("fw: %s:%u\n", fw_host, fw_port);
+	//dprintf("load profile: %s\n", profile_path);
 
-	dprintf("port number: %u\n", port_number);
-	dprintf("target addr: %s:%u\n", rc_host_name, rc_port_number);
-	dprintf("load profile: %s\n", profile_path);
+	Proxy proxy(port, fw_host, fw_port);
+	std::thread proxy_thread(&Proxy::start, &proxy);
 
-	Proxy proxy(port_number);
-	proxy.set_server(rc_host_name, rc_port_number);
-	proxy.process_requests();
-
-	//std::thread upstream_thread(&UpstreamHandler::process_requests, &upstream_handler);
-	//upstream_thread.join();
+	proxy_thread.join();
 
 	return 0;
 }

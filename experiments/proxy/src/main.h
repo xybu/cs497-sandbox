@@ -5,8 +5,11 @@
  * @author	Xiangyu Bu <xb@purdue.edu>
  */
 
-#define MAX_PORT			65535
-#define DEFAULT_LOCAL_PORT	6633
-#define DEFAULT_RC_PORT		6634
-#define DEFAULT_RC_HOST		"127.0.0.1"
-#define DEFAULT_RC_HOST_LEN	10
+// default forward address
+#define DEFAULT_PORT		6633
+#define DEFAULT_FW_DEV		"lo"
+#define DEFAULT_FW_HOST		"127.0.0.1"
+#define DEFAULT_FW_PORT		6635
+
+// macro functions
+#define is_valid_port(x)	((x >= 0) && ( x <= 65535))

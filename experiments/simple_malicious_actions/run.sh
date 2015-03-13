@@ -13,6 +13,9 @@ elif [ -x "$(which gnome-terminal)" ] ; then
 elif [ -x "$(which konsole)" ] ; then
 	echo -e "\033[92mFind \"konsole\".\033[0m"
 	TERMINAL_CMD='konsole -e'
+elif [ -x "$(which mate-terminal)" ] ; then
+	echo -e "\033[92mFind \"mate-terminal\".\033[0m"
+	TERMINAL_CMD='mate-terminal -e'
 elif [ -x "$(which xterm)" ] ; then
 	echo -e "\033[92mFind \"xterm\".\033[0m"
 	TERMINAL_CMD='xterm -e'

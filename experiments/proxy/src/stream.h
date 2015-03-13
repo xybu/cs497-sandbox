@@ -1,3 +1,14 @@
+/**
+ * stream.h
+ * Class declaration for a simple byte stream wrapper.
+ * 
+ * @author	Xiangyu Bu <xb@purdue.edu>
+ */
+
+#ifndef _STREAM_H
+
+#define _STREAM_H
+
 #include <cstdlib>
 
 #define DEFAULT_STREAM_LEN	512
@@ -14,3 +25,5 @@ public:
 	void append2(Stream *stream);
 	void dump();
 };
+
+#endif

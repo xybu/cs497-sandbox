@@ -1,3 +1,10 @@
+/**
+ * stream.cpp
+ * A simple byte stream wrapper.
+ * 
+ * @author	Xiangyu Bu <xb@purdue.edu>
+ */
+
 #include <cstdio>
 #include <cstring>
 #include <exception>
