@@ -63,9 +63,9 @@ Current test covers only IPv4 so far.
 
 There are two major approaches how we deal with the traffic: acting as a proxy and acting as a sniffer.
 
-Sniffer approach makes it easier to preservs the order of messages, and makes it possible to hide this man-in-the-middle process from client-server communication. However, it is inefficient because all packets through a _device_ (not a specific port) are monitered, and are sent to the program for analysis according to some rules (see [libtins](http://libtins.github.io) and `libpcap`). And such sniffer program tends to require higher privilege to run. Besides, work outside the sniffer program is needed to drop the original packet if you do packet injection; otherwise the destination receives two packets. Such work may be done in iptables, etc.
+Sniffer approach makes it easier to preservs the order of messages, and makes it possible to hide this man-in-the-middle process from client-server communication. However, it is inefficient because all packets through a _device_ (not a specific port) are monitered, and are sent to the program for analysis according to some rules (see [libtins](http://libtins.github.io) and `libpcap`). And such sniffer program tends to require higher privilege to run. Besides, work outside the sniffer program is needed to drop the original packet if you do packet injection; otherwise the destination receives two packets. Such work may be done in iptables, etc, but this means changing the host OS configurations. In addition, for a sniffer to work properly, it must run on the same host as the controller.
 
-By contrast, in proxy approach it is more difficult to keep messages in-order. Further, with standard socket API the packet headers are hidden. But the program generally requires low privilege, and can be more efficient.
+By contrast, in proxy approach it is more difficult to keep messages in-order. Further, with standard socket API the packet headers are hidden. But the program generally requires low privilege, and can be more efficient in processing and flexible in host requirements.
 
 As indicated by the program name, we use proxy approach.
 
