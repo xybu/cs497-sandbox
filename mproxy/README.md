@@ -53,7 +53,7 @@ make clean
 
 As described in the intro, this tool forwards traffic as a proxy. However, it does not hides its existence. Its clients treat mproxy as the server, and the real server treats different connections with mproxy as different clients.
 
-## IPv4 / IPv6 / Unix Socket
+## IPv4 / IPv6
 
 Clients can reach mproxy by the hostname mproxy is located and the port number mproxy listens to (by default, 6633), while mproxy itself can talk to any server by IPv4 address and port, IPv6 address and port, or Unix socket address.
 
