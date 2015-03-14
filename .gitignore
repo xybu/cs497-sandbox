@@ -1,5 +1,7 @@
 # Created by https://www.gitignore.io
 
+main
+
 ### C++ ###
 # Compiled Object files
 *.slo

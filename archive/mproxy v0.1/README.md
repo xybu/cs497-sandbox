@@ -5,7 +5,7 @@ This malicious proxy acts as a man in the middle between OpenFlow switches and c
 
 # Mechanism
 
-Each connection to the proxy is handled by two threads.
+Each connection to the proxy is handled by two threads. Threads use semaphore to coordinate tasks.
 
 # Compilation
 
