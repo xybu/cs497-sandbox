@@ -5,12 +5,12 @@
 ### 02/17/2015
 
  * For convenience, installation scripts for Mininet and Ryu are written at 
-   `/misc/install_mininet.sh` and `/misc/install_ryu.sh`, respectively. 
+   `/misc/inst/install_mininet.sh` and `/misc/inst/install_ryu.sh`, respectively. 
    Tested on Ubuntu 14.04.
    
  * A demo topology from Mininet Python binding is at 
-   `/misc/demo_mininet_topo.py`. The sample command to construct the topo is at
-   `/misc/demo_mininet_topo.sh`.
+   `/misc/demo/demo_mininet_topo.py`. The sample command to construct the topo is at
+   `/misc/demo/demo_mininet_topo.sh`.
    
 	 * The reason why we use `remote` controller instead of Mininet's built-in 
       `ryu` is that we can gain better control over Ryu. We may want its 
