@@ -36,6 +36,18 @@ More about comparisons of sniffer approach to proxy approach is [in the README d
 
 ## Proxy
 
-A proxy accepts traffic on behalf of a destination and forwards the traffic to the destination at its convenience. Our current approach, [mproxy](/mproxy/), implements a full-duplex proxy.
+A proxy accepts traffic on behalf of a destination and forwards the traffic to the destination at its convenience. Our current approach, [mproxy](/mproxy/), implements a proxy that communicates with a server on behalf of one or more client.
 
+[This document](/mproxy/README.md) describes in detail about mproxy.
+
+An important feature of this program is the event-driven model. It is way better than blocking-call based polling or semaphore-based scheduling in terms of both flexibility and performance.
+
+# Next
+
+Our next steps include:
+
+* Make a OFP parser that can analyze the intercepted messages;
+* Based on the parser, implement malicious actions that can modify some field in OFP message (e.g., set a field above its allowed maximum), or change the delivery behavior (delay, drop, or repeated delivery) of the message, according to a predefined set of rules;
+* Add this component to mproxy;
+* Test how well the proxy will work to attack the target SDN controller / switch.
 
