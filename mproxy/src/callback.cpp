@@ -8,6 +8,7 @@
 #include "global.h"
 #include "callback.h"
 #include "client_detail.h"
+#include "ofp.h"
 #include "stream.h"
 
 namespace callback {
