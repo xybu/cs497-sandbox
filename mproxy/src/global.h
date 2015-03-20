@@ -37,7 +37,7 @@
 #ifdef _DEBUG
 	#define	dprintf(format, args...)	fprintf(stderr, format , ##args)
 #else
-	#define	dprintf(format, args...)
+	#define	dprintf(format, args...);
 #endif
 
 #ifdef _COLORFUL
