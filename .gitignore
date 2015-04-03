@@ -1,6 +1,7 @@
 # Created by https://www.gitignore.io
 
 main
+/utils/loxigen
 
 ### C++ ###
 # Compiled Object files
