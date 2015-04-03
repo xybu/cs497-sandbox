@@ -1,0 +1,1 @@
+OPTFLAGS = -O1 -mtune=native -march=native -mfpmath=sse -msse -msse2 -msse3
