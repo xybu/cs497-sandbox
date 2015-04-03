@@ -21,6 +21,7 @@ ClientDetail::ClientDetail(int cli_fd, int forward_fd) {
 	ev_base = NULL;
 	ev_buf = NULL;
 	ev_buf = NULL;
+	in_buf = NULL
 }
 
 ClientDetail::~ClientDetail() {

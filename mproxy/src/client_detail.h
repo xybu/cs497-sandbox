@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
+#include "stream.h"
 
 class ClientDetail {
 public:
@@ -20,6 +21,7 @@ public:
 	struct event_base *ev_base;
 	struct evbuffer	*ev_buf;
 	struct bufferevent *ev_event;
+	Stream *in_buf;
 	
 	ClientDetail(int, int);
 	~ClientDetail();
