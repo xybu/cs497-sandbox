@@ -10,7 +10,7 @@ libloci.a: $(LOCI_OBJ_FILES)
 	ar rcu $@ $(LOCI_OBJ_FILES)
 
 loci/src/%.o: loci/src/%.c $(LOCI_INC_FILES)
-	gcc $(OPTFLAGS) -I loci/inc -c $< -o $@
+	$(GCC) $(OPTFLAGS) -I loci/inc -c $< -o $@
 
 clean:
 	rm -fv $(LOCI_OBJ_FILES) loci.a
