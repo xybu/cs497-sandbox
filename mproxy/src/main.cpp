@@ -5,11 +5,12 @@
  * @author	Xiangyu Bu <xb@purdue.edu>
  */
 
+#include <cstdio>
 #include <cstring>
+#include <unistd.h>
 #include <climits>
-#include <thread>
 #include <csignal>
-#include <deque>
+#include <thread>
 #include <event2/event.h>
 #include <event2/thread.h>
 #include "global.h"
@@ -17,7 +18,7 @@
 #include "proxy.h"
 #include "task.h"
 #include "worker.h"
-#include "client_detail.h"
+#include "client.h"
 
 #ifdef _WIN32
  	#define LIBEVENT_THREAD_INIT	evthread_use_windows_threads
@@ -43,19 +44,19 @@ void print_usage(const char *prog_name) {
 void parse_port_num(char *arg, unsigned int *val) {
 	*val = atoi(arg);
 	if (!is_valid_port(*val)) {
-		die("Invalid port number \"%u\".\n", *val);
+		die(1, "Invalid port number \"%u\".\n", *val);
 	}
-	dprintf("Parsed port: %u.\n", *val);
+	debug("Parsed port: %u.\n", *val);
 }
 
 void parse_fw_host(char *arg, char *hostname, unsigned int *port) {
 	char *delim = strchr(arg, ':');
 	if (delim == NULL) {
-		die("Invalid forward address \"%s\": port is missing.\n", arg);
+		die(1, "Invalid forward address \"%s\": port is missing.\n", arg);
 	}
 	*delim = '\0';
 	memcpy(hostname, arg, delim - arg);
-	dprintf("Parsed hostname: \"%s\".\n", hostname);
+	debug("Parsed hostname: \"%s\".\n", hostname);
 	parse_port_num(delim + 1, port);
 }
 
@@ -64,7 +65,7 @@ void parse_profile(char *arg) {
 }
 
 void terminate_main(int sig) {
-	dprintf("\033[91mTerminating program...\033[0m\n");
+	debug(COLOR_CYAN "Stopping program...\n" COLOR_BLACK);
 	if (proxy) {
 		proxy->stop();
 	}
@@ -104,17 +105,17 @@ int main(int argc, char **argv) {
 	}
 
 	if (LIBEVENT_THREAD_INIT()) {
-		die("main: failed to initialize libevent.\n");
+		die(1, "main: failed to initialize libevent.\n");
 	}
 
 	if (signal(SIGTERM, terminate_main) == SIG_ERR ||
 		signal(SIGINT, terminate_main) == SIG_ERR) {
-		die("main: failed to register signal handler.\n");
+		die(1, "main: failed to register signal handler.\n");
 	}
 
-	dprintf("port: %u\n", port);
-	dprintf("fw: %s:%u\n", fw_host, fw_port);
-	//dprintf("load profile: %s\n", profile_path);
+	debug("port: %u\n", port);
+	debug("fw: %s:%u\n", fw_host, fw_port);
+	//debug("load profile: %s\n", profile_path);
 
 	// instantiate task queue
 	task_queue = new TaskQueue();
@@ -126,42 +127,46 @@ int main(int argc, char **argv) {
 		w->start();
 		workers[i] = w;
 	}
+	log(COLOR_CYAN "main: all workers started.\n" COLOR_BLACK);
 
 	// instantiate proxy
 	try {
 		proxy = new Proxy(port, fw_host, fw_port);
 	} catch (int err) {
-		exit(1);
+		log(COLOR_RED "main: failed to start proxy.\n" COLOR_BLACK);
+		exit(err);
 	}
+	log(COLOR_CYAN "main: starting proxy...\n" COLOR_BLACK);
 	proxy->start();
 
 	// cleanup client detail objects
+	log(COLOR_CYAN "main: housekeeping...\n" COLOR_BLACK);
 	client_map.erase(-1);
-	dprintf("main: sweeping client detail objects (%lu total)...\n", client_map.size());
+	debug("main: sweeping client detail objects (%lu total)...\n", client_map.size());
 	while (client_map.size() > 0) {
 		auto it = client_map.begin();
 		if (it == client_map.end()) break;
-		ClientDetail *d = it->second;
+		Client *d = it->second;
 		if (d && d->ev_base) {
-			dprintf("main: I try to break loop for fd %d.\n", d->fd);
+			debug("main: I try to break loop for fd %d.\n", d->fd);
 			event_base_loopbreak(d->ev_base);
 		} else if (d) {
-			dprintf("main: I got fd %d.\n", d->fd);
+			debug("main: I got fd %d.\n", d->fd);
 		} else {
-			dprintf("main: I got a NULL whose index is %d.\n", it->first);
+			debug("main: I got a NULL whose index is %d.\n", it->first);
 		}
-		dprintf("main: there are %lu objects in map.\n", client_map.size());
+		debug("main: there are %lu objects in map.\n", client_map.size());
 		sleep(1);
 	}
 	
 	// stop workers
-	dprintf("main: removing workers...\n");
+	debug("main: removing workers...\n");
 	for (i = 0; i < NUM_OF_WORKERS; ++i) {
 		workers[i]->can_run = false;
 	}
 	task_queue->increment_count(NUM_OF_WORKERS);
 	for (i = 0; i < NUM_OF_WORKERS; ++i) {
-		dprintf("main: waiting for worker%d.\n", i);
+		debug("main: waiting for worker%d.\n", i);
 		workers[i]->th->join();
 		delete workers[i];
 	}
@@ -174,7 +179,7 @@ int main(int argc, char **argv) {
 	// evthread_use_pthread() is called.
 	// libevent_global_shutdown();
 	
-	dprintf("\033[92mProgram exit.\033[0m\n");
+	log(COLOR_CYAN "Program exit.\n" COLOR_BLACK);
 
 	return 0;
 }

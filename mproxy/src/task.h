@@ -11,7 +11,7 @@
 
 #include <semaphore.h>
 #include <mutex>
-#include <deque>
+#include <list>
 
 typedef struct task {
 	std::mutex ready;
@@ -22,7 +22,7 @@ typedef struct task {
 // a generic, unbounded, thread-safe queue
 class TaskQueue {
 	std::mutex mut;
-	std::deque<Task *> queue;
+	std::list<Task *> queue;
 public:
 	sem_t count;
 	int status;

@@ -1,6 +1,7 @@
 /**
  * global.h
  * Globally used constants and declarations.
+ * The header is included in both C++ and C source files.
  * 
  * @author	Xiangyu Bu <xb@purdue.edu>
  */
@@ -9,12 +10,11 @@
 
 #define _MPROXY_GLOBAL_H
 
-#include <cstdio>
-#include <cstdlib>
-#include <unistd.h>
+//#define _DEBUG
+//#define _COLORFUL
 
 #ifndef NUM_OF_WORKERS
- #define NUM_OF_WORKERS 2
+	#define NUM_OF_WORKERS 2
 #endif
 
 #define STATUS_ERR				-1
@@ -27,23 +27,31 @@
 #define SEM_PRIVATE				0
 #define SEM_SHARED				1
 
-//#define _DEBUG
-//#define _COLORFUL
-
-#define	die(format, args...);	fprintf(stderr, format, ##args);exit(1);
-
-#define erprintf(format, args...)	fprintf(stderr, format , ##args)
-
-#ifdef _DEBUG
-	#define	dprintf(format, args...)	fprintf(stderr, format , ##args)
-#else
-	#define	dprintf(format, args...);
-#endif
+#define	die(x, ...)			{fprintf(stderr, __VA_ARGS__);exit(x);}
+#define err(...)			fprintf(stderr, __VA_ARGS__)
+#define log(...)			fprintf(stderr, __VA_ARGS__)
+#define is_valid_fd(x)		(fcntl(x,  F_GETFL) != -1)
 
 #ifdef _COLORFUL
-	#define pperror(x);	{fprintf(stderr, "\033[91m");perror(x);fprintf(stderr, "\033[0m");}
+ 	#define COLOR_RED		"\033[91m"
+	#define COLOR_GREEN		"\033[92m"
+	#define COLOR_YELLOW	"\033[93m"
+	#define COLOR_CYAN		"\033[96m"
+	#define COLOR_BLACK		"\033[0m"
+	#define pperror(x);	{fprintf(stderr, COLOR_RED);perror(x);fprintf(stderr, COLOR_BLACK);}
 #else
+ 	#define COLOR_RED	
+	#define COLOR_GREEN	
+	#define COLOR_YELLOW
+	#define COLOR_CYAN	
+	#define COLOR_BLACK
 	#define pperror(x)	perror(x)
+#endif
+
+#ifdef _DEBUG
+	#define	debug(...)	fprintf(stderr, __VA_ARGS__)
+#else
+	#define	debug(...);
 #endif
 
 #endif

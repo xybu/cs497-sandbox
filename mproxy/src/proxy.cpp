@@ -5,18 +5,50 @@
  * @author	Xiangyu Bu <xb@purdue.edu>
  */
 
+#include <cstdio>
 #include <cstring>
+#include <unistd.h>
 #include "global.h"
 #include "proxy.h"
-#include "client_detail.h"
-#include "callback.h"
+#include "client.h"
+#include "action.h"
 
+/**
+ * Set the target file descriptor to non-block mode.
+ */
 static int set_nonblock(int fd) {
 	int flag = fcntl(fd, F_GETFL);
 	if (flag < 0) return flag;
 	flag |= O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, flag) < 0) return -1;
 	return 0;
+}
+
+/**
+ * A wrapper function to call C function that starts event looping
+ * and frees resource when loop ends.
+ */
+void start_client_thread(Client *client) {
+	act_start_loop(client->ev_base);
+	delete client;
+}
+
+/**
+ * A wrapper function to call the C version of event handler
+ * because loci has error if compiled under C++.
+ */
+void on_flow_read(struct bufferevent *bev, void *arg) {
+	int ret = act_on_flow_read(((Client *)arg)->ev_base, bev, ((Client *)arg)->ev_buf, ((Client *)arg)->fd, ((Client *)arg)->fw_fd, &(((Client *)arg)->buf));
+	if (ret) {
+		err(COLOR_RED "on_flow_read: failed to handle event for client %d. Err code %d.\n" COLOR_BLACK, ((Client *)arg)->fd, ret);
+	}
+}
+
+/**
+ * A wrapper function to call the C version of event error handler.
+ */
+void on_flow_error(struct bufferevent *bev, short what, void *arg) {
+	err(COLOR_RED "on_flow_error: an error occured. Err code %d.\n" COLOR_BLACK, what);
 }
 
 Proxy::Proxy(int port, char *fw_host, int fw_port) {
@@ -35,7 +67,7 @@ Proxy::Proxy(int port, char *fw_host, int fw_port) {
 }
 
 Proxy::~Proxy() {
-	//for (std::deque<std::thread *>::iterator it = thread_pool.begin(); 
+	//for (std::list<std::thread *>::iterator it = thread_pool.begin(); 
 	//		it != thread_pool.end(); ++it) {
 	//	*it.terminate();
 	//}
@@ -43,12 +75,12 @@ Proxy::~Proxy() {
 	if (in_sock_fd >= 0) close(in_sock_fd);
 	if (out_host != NULL) freeaddrinfo(out_host);
 	//if (status == STATUS_OK) sem_destroy(&scheduler_sem);
-	dprintf("proxy: sweeping handler threads.\n");
+	debug("proxy: sweeping handler threads.\n");
 	for (auto it = handler_pool.begin(); it != handler_pool.end(); ++it) {
 		(*it)->join();
 		delete *it;
 	}
-	dprintf("proxy: freed.\n");
+	debug("proxy: freed.\n");
 }
 
 ProxyStatus Proxy::init_in_socket(int port, int queue_len) {
@@ -123,33 +155,33 @@ void Proxy::stop() {
 	status = STATUS_STOP;
 	close(in_sock_fd);
 	in_sock_fd = -1;
-	dprintf("proxy: stopped with status %d.\n", status);
+	debug("proxy: stopped with status %d.\n", status);
 }
 
 void Proxy::start_listen() {
 	SockAddr6 in_addr;
 	register socklen_t cli_sock_len = sizeof(SockAddr6);
 	register int in_fd, out_fd;
-	ClientDetail *in_cd, *out_cd;
+	Client *in_cd, *out_cd;
 
-	dprintf("listener: started.\n");
+	debug("listener: started.\n");
 	
 	while (is_valid_fd(in_sock_fd)) {
 		
-		dprintf("listener: waiting for requests.\n");
+		debug("listener: waiting for requests.\n");
 
 		if ((in_fd = accept(in_sock_fd, (struct sockaddr *)&in_addr, &cli_sock_len)) < 0) {
 			if (status != STATUS_STOP) {
-				erprintf("listener: got negative in fd. status=%d. in_sock_fd=%d.\n", status, in_sock_fd);
+				err("listener: got negative in fd. status=%d. in_sock_fd=%d.\n", status, in_sock_fd);
 			}
 			break;
 		}
 
-		dprintf("\033[94mlistener: got request on port %u.\033[0m\n", in_addr.sin6_port);
+		debug(COLOR_CYAN "listener: got request on port %u.\n" COLOR_BLACK, in_addr.sin6_port);
 
 		// set inflow fd nonblock
 		if (set_nonblock(in_fd) < 0) {
-			erprintf("listener: failed to set fd %d to nonblock mode.\n", in_fd);
+			err("listener: failed to set fd %d to nonblock mode.\n", in_fd);
 			close(in_fd);
 			continue;
 		}
@@ -162,47 +194,47 @@ void Proxy::start_listen() {
 
 		// set outflow fd nonblock
 		if (set_nonblock(out_fd) < 0) {
-			erprintf("listener: failed to set fd %d to nonblock mode.\n", out_fd);
+			err("listener: failed to set fd %d to nonblock mode.\n", out_fd);
 			close(in_fd);
 			close(out_fd);
 			continue;
 		}
 
-		in_cd = new ClientDetail(in_fd, out_fd);
+		in_cd = new Client(in_fd, out_fd);
 		if (!in_cd) {
-			erprintf("listener: failed to malloc ClientDetail.\n");
+			err("listener: failed to malloc Client.\n");
 			close(in_fd);
 			close(out_fd);
 			continue;
 		}
 
-		if (in_cd->init(callback::on_inflow_read, NULL, callback::on_flow_error)) {
-			erprintf("listener: failed to init event.\n");
+		if (in_cd->init(on_flow_read, NULL, on_flow_error)) {
+			err("listener: failed to init event.\n");
 			close(out_fd);
 			delete in_cd;
 			continue;
 		}
 
-		out_cd = new ClientDetail(out_fd, in_fd);
+		out_cd = new Client(out_fd, in_fd);
 		if (!out_cd) {
-			erprintf("listener: failed to malloc ClientDetail.\n");
+			err("listener: failed to malloc Client.\n");
 			close(out_fd);
 			delete in_cd;
 			continue;
 		}
 
-		if (out_cd->init(callback::on_outflow_read, NULL, callback::on_flow_error)) {
-			erprintf("listener: failed to init event.\n");
+		if (out_cd->init(on_flow_read, NULL, on_flow_error)) {
+			err("listener: failed to init event.\n");
 			delete in_cd;
 			delete out_cd;
 			continue;
 		}
 
-		handler_pool.push_back(new std::thread(&callback::start_event, out_cd));
-		handler_pool.push_back(new std::thread(&callback::start_event, in_cd));
+		handler_pool.push_back(new std::thread(&start_client_thread, out_cd));
+		handler_pool.push_back(new std::thread(&start_client_thread, in_cd));
 
-		dprintf("\033[92mlistener: handled one request (%d, %d).\033[0m\n", in_fd, out_fd);
+		debug("\033[92mlistener: handled one request (%d, %d).\033[0m\n", in_fd, out_fd);
 	}
 
-	dprintf("listener: loop broke.\n");
+	debug("listener: loop broke.\n");
 }
