@@ -2,6 +2,7 @@
 
 main
 /mproxy/utils/loxigen
+/mproxy/inc/loci/doc
 
 ### C++ ###
 # Compiled Object files
