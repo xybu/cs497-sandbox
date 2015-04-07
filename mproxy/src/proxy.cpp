@@ -12,6 +12,11 @@
 #include "proxy.h"
 #include "client.h"
 #include "action.h"
+#include <event2/event.h>
+#include <event2/util.h>
+
+#define OFP_HEADER_BYTES		(8)
+#define OFP_HEADER_LEN_OFFSET	(2)
 
 /**
  * Set the target file descriptor to non-block mode.
@@ -24,31 +29,95 @@ static int set_nonblock(int fd) {
 	return 0;
 }
 
-/**
- * A wrapper function to call C function that starts event looping
- * and frees resource when loop ends.
- */
 void start_client_thread(Client *client) {
-	act_start_loop(client->ev_base);
+	event_base_dispatch(client->ev_base);
 	delete client;
 }
 
 /**
- * A wrapper function to call the C version of event handler
+ * A wrapper function to call the C version of OFP message handler
  * because loci has error if compiled under C++.
  */
 void on_flow_read(struct bufferevent *bev, void *arg) {
-	int ret = act_on_flow_read(((Client *)arg)->ev_base, bev, ((Client *)arg)->ev_buf, ((Client *)arg)->fd, ((Client *)arg)->fw_fd, &(((Client *)arg)->buf));
-	if (ret) {
-		err(COLOR_RED "on_flow_read: failed to handle event for client %d. Err code %d.\n" COLOR_BLACK, ((Client *)arg)->fd, ret);
+	struct evbuffer *input = bufferevent_get_input(bev);
+	size_t bytes_to_read = evbuffer_get_length(input);
+	size_t len_processed = 0;
+	stream_t *msg = ((Client *)arg)->buf;
+	int fw_fd = ((Client *)arg)->fw_fd;
+	Client *fw_cli = client_map[fw_fd];
+
+	dbg(COLOR_YELLOW "on_flow_read: %lu bytes to read on fd %d.\n" COLOR_BLACK, bytes_to_read, ((Client *)arg)->fd);
+
+	if ((msg->cap - msg->len < bytes_to_read) && stream_expand(msg, bytes_to_read)) {
+		err(COLOR_RED "on_flow_read: cannot realloc.\n" COLOR_BLACK);
+		return;
 	}
+	
+	evbuffer_remove(input, msg->data + msg->len, bytes_to_read);
+	msg->len += bytes_to_read;
+
+	// insufficient data
+	if (msg->len < OFP_HEADER_BYTES) 
+		return;
+
+	//#ifdef _DEBUG
+	//stream_dump(msg);
+	//#endif
+
+	if (fw_cli == NULL) {
+		err(COLOR_RED "on_flow_read: pair has closed. Exit client.\n" COLOR_BLACK);
+		event_base_loopexit(((Client *)arg)->ev_base, NULL);
+		return;
+	}
+
+	while (len_processed + OFP_HEADER_BYTES <= msg->len) {
+		unsigned char *ofp_msg = msg->data + len_processed;
+		uint16_t ofp_msg_len = *((uint16_t *)(ofp_msg + OFP_HEADER_LEN_OFFSET));
+		ofp_msg_len = (ofp_msg_len >> 8) | (ofp_msg_len << 8); // big endian to little endian
+
+		dbg(COLOR_YELLOW "on_flow_read: message length is %u bytes.\n" COLOR_BLACK, ofp_msg_len);
+		
+		if (ofp_msg_len == 0) {
+			// should never be 0
+			err(COLOR_RED "on_flow_read: got msg of length 0 on fd %d. Malformed header.\n" COLOR_BLACK, fw_cli->fd);
+			event_base_loopexit(((Client *)arg)->ev_base, NULL);
+			return;
+		}
+		if (ofp_msg_len > msg->len - len_processed) {
+			if (len_processed > 0) stream_left_shift(msg, len_processed);
+			return;
+		}
+		
+		stream_t *response = action_inject(ofp_msg, ofp_msg_len);
+		if (response) {
+			if (fw_cli == NULL || !is_valid_fd(fw_fd)) {
+				stream_free(response);
+				err(COLOR_RED "on_flow_read: Fw fd of client %d has been closed. Stop.\n" COLOR_BLACK, ((Client *)arg)->fd);
+				event_base_loopexit(((Client *)arg)->ev_base, NULL);
+				return;
+			}
+			evbuffer_add(fw_cli->ev_buf, response->data, response->len);
+			stream_free(response);
+			if (bufferevent_write_buffer(fw_cli->ev_event, fw_cli->ev_buf)) {
+				err(COLOR_RED "on_flow_read: failed to write to fd %d.\n" COLOR_BLACK, fw_cli->fd);
+				event_base_loopexit(((Client *)arg)->ev_base, NULL);
+				return;
+			}
+		}
+		len_processed += ofp_msg_len;
+		dbg(COLOR_YELLOW "on_flow_read: processed %lu / %lu bytes.\n" COLOR_BLACK, len_processed, msg->len);
+	}
+	if (len_processed > 0) stream_left_shift(msg, len_processed);
+	dbg(COLOR_GREEN "on_flow_read: finished handling read event on fd %d.\n" COLOR_BLACK, ((Client *)arg)->fd);
 }
 
 /**
  * A wrapper function to call the C version of event error handler.
+ * read-end if 0x01, write-end if 0x02.
+ * EOF = 0x10, unrecoverable rror = 0x20, timeout = 0x40, connect op finished = 0x80.
  */
 void on_flow_error(struct bufferevent *bev, short what, void *arg) {
-	err(COLOR_RED "on_flow_error: an error occured. Err code %d.\n" COLOR_BLACK, what);
+	err(COLOR_RED "on_flow_error: an error occured on fd %d. Err code 0x%x.\n" COLOR_BLACK, ((Client *)arg)->fd, what);
 }
 
 Proxy::Proxy(int port, char *fw_host, int fw_port) {
@@ -75,12 +144,12 @@ Proxy::~Proxy() {
 	if (in_sock_fd >= 0) close(in_sock_fd);
 	if (out_host != NULL) freeaddrinfo(out_host);
 	//if (status == STATUS_OK) sem_destroy(&scheduler_sem);
-	debug("proxy: sweeping handler threads.\n");
+	dbg("proxy: sweeping handler threads.\n");
 	for (auto it = handler_pool.begin(); it != handler_pool.end(); ++it) {
 		(*it)->join();
 		delete *it;
 	}
-	debug("proxy: freed.\n");
+	dbg("proxy: freed.\n");
 }
 
 ProxyStatus Proxy::init_in_socket(int port, int queue_len) {
@@ -155,7 +224,7 @@ void Proxy::stop() {
 	status = STATUS_STOP;
 	close(in_sock_fd);
 	in_sock_fd = -1;
-	debug("proxy: stopped with status %d.\n", status);
+	dbg("proxy: stopped with status %d.\n", status);
 }
 
 void Proxy::start_listen() {
@@ -164,11 +233,11 @@ void Proxy::start_listen() {
 	register int in_fd, out_fd;
 	Client *in_cd, *out_cd;
 
-	debug("listener: started.\n");
+	dbg("listener: started.\n");
 	
 	while (is_valid_fd(in_sock_fd)) {
 		
-		debug("listener: waiting for requests.\n");
+		dbg("listener: waiting for requests.\n");
 
 		if ((in_fd = accept(in_sock_fd, (struct sockaddr *)&in_addr, &cli_sock_len)) < 0) {
 			if (status != STATUS_STOP) {
@@ -177,7 +246,7 @@ void Proxy::start_listen() {
 			break;
 		}
 
-		debug(COLOR_CYAN "listener: got request on port %u.\n" COLOR_BLACK, in_addr.sin6_port);
+		dbg(COLOR_CYAN "listener: got request on port %u.\n" COLOR_BLACK, in_addr.sin6_port);
 
 		// set inflow fd nonblock
 		if (set_nonblock(in_fd) < 0) {
@@ -189,6 +258,7 @@ void Proxy::start_listen() {
 		// create a new connection to fw host
 		if ((out_fd = get_outflow_fd()) < 0) {
 			close(in_fd);
+			err(COLOR_RED "listener: failed to get a fd to fw host.\n" COLOR_BLACK);
 			continue;
 		}
 
@@ -233,8 +303,8 @@ void Proxy::start_listen() {
 		handler_pool.push_back(new std::thread(&start_client_thread, out_cd));
 		handler_pool.push_back(new std::thread(&start_client_thread, in_cd));
 
-		debug("\033[92mlistener: handled one request (%d, %d).\033[0m\n", in_fd, out_fd);
+		dbg("\033[92mlistener: handled one request (%d, %d).\033[0m\n", in_fd, out_fd);
 	}
 
-	debug("listener: loop broke.\n");
+	dbg("listener: loop broke.\n");
 }

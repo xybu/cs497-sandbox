@@ -49,9 +49,9 @@
 #endif
 
 #ifdef _DEBUG
-	#define	debug(...)	fprintf(stderr, __VA_ARGS__)
+	#define	dbg(...)	fprintf(stderr, __VA_ARGS__)
 #else
-	#define	debug(...);
+	#define	dbg(...);
 #endif
 
 #endif

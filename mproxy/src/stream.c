@@ -55,7 +55,7 @@ stream_t *stream_new(size_t size) {
 		return NULL;
 	}
 	ret->len = 0;
-	ret->cap = 0;
+	ret->cap = size;
 	return ret;
 }
 
@@ -86,4 +86,9 @@ int stream_expand(stream_t *s, size_t size) {
 	s->cap += size;
 	s->data = new_ptr;
 	return 0;
+}
+
+void stream_left_shift(stream_t *s, size_t size) {
+	memcpy(s->data, s->data + size, s->len - size);
+	s->len -= size;
 }

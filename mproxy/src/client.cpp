@@ -16,13 +16,12 @@
 std::unordered_map<int, Client *> client_map;
 
 Client::Client(int cli_fd, int forward_fd) {
-	debug("Client: creating pair (%d, %d).\n", cli_fd, forward_fd);
+	dbg("Client: creating pair (%d, %d).\n", cli_fd, forward_fd);
 	fd = cli_fd;
 	fw_fd = forward_fd;
 	ev_base = NULL;
 	ev_buf = NULL;
 	ev_buf = NULL;
-	buf = NULL;
 }
 
 Client::~Client() {
@@ -50,23 +49,28 @@ Client::~Client() {
 		event_base_loopbreak(fw_cli->ev_base);
 	}
 	if (buf) stream_free(buf);
-	debug("A Client object was freed.\n");
+	dbg("A Client object was freed.\n");
 }
 
 int Client::init(bufferevent_data_cb on_read, bufferevent_data_cb on_write, bufferevent_event_cb on_error) {
 
+	if (!(buf = stream_new(DEFAULT_STREAM_LEN))) {
+		err("Client::init: failed to malloc buffer.\n");
+		return STATUS_ERR;
+	}
+
 	if (!(ev_buf = evbuffer_new())) {
-		err("failed to create event buffer.\n");
+		err("Client::init: failed to create event buffer.\n");
 		return STATUS_ERR;
 	}
 
 	if (!(ev_base = event_base_new())) {
-		err("failed to create event base.\n");
+		err("Client::init: failed to create event base.\n");
 		return STATUS_ERR;
 	}
 
 	if (!(ev_event = bufferevent_socket_new(ev_base, fd, 0))) {
-		err("failed to create buffered event.\n");
+		err("Client::init: failed to create buffered event.\n");
 		return STATUS_ERR;
 	}
 

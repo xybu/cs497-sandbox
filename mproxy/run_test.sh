@@ -7,7 +7,7 @@ $TERMINAL_CMD "ryu-manager --verbose --observe-links /usr/local/lib/python2.7/di
 
 sleep 2
 
-$TERMINAL_CMD "./mproxy"
+$TERMINAL_CMD "./main"
 
 sleep 2
 

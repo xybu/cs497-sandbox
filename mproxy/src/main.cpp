@@ -46,7 +46,7 @@ void parse_port_num(char *arg, unsigned int *val) {
 	if (!is_valid_port(*val)) {
 		die(1, "Invalid port number \"%u\".\n", *val);
 	}
-	debug("Parsed port: %u.\n", *val);
+	dbg("Parsed port: %u.\n", *val);
 }
 
 void parse_fw_host(char *arg, char *hostname, unsigned int *port) {
@@ -56,7 +56,7 @@ void parse_fw_host(char *arg, char *hostname, unsigned int *port) {
 	}
 	*delim = '\0';
 	memcpy(hostname, arg, delim - arg);
-	debug("Parsed hostname: \"%s\".\n", hostname);
+	dbg("Parsed hostname: \"%s\".\n", hostname);
 	parse_port_num(delim + 1, port);
 }
 
@@ -65,7 +65,7 @@ void parse_profile(char *arg) {
 }
 
 void terminate_main(int sig) {
-	debug(COLOR_CYAN "Stopping program...\n" COLOR_BLACK);
+	dbg(COLOR_CYAN "Stopping program...\n" COLOR_BLACK);
 	if (proxy) {
 		proxy->stop();
 	}
@@ -113,9 +113,9 @@ int main(int argc, char **argv) {
 		die(1, "main: failed to register signal handler.\n");
 	}
 
-	debug("port: %u\n", port);
-	debug("fw: %s:%u\n", fw_host, fw_port);
-	//debug("load profile: %s\n", profile_path);
+	dbg("port: %u\n", port);
+	dbg("fw: %s:%u\n", fw_host, fw_port);
+	//dbg("load profile: %s\n", profile_path);
 
 	// instantiate task queue
 	task_queue = new TaskQueue();
@@ -141,32 +141,32 @@ int main(int argc, char **argv) {
 
 	// cleanup client detail objects
 	log(COLOR_CYAN "main: housekeeping...\n" COLOR_BLACK);
-	client_map.erase(-1);
-	debug("main: sweeping client detail objects (%lu total)...\n", client_map.size());
+	dbg("main: sweeping client detail objects (%lu total)...\n", client_map.size());
 	while (client_map.size() > 0) {
+		client_map.erase(-1);
 		auto it = client_map.begin();
 		if (it == client_map.end()) break;
 		Client *d = it->second;
 		if (d && d->ev_base) {
-			debug("main: I try to break loop for fd %d.\n", d->fd);
+			dbg("main: I try to break loop for fd %d.\n", d->fd);
 			event_base_loopbreak(d->ev_base);
 		} else if (d) {
-			debug("main: I got fd %d.\n", d->fd);
+			dbg("main: I got fd %d.\n", d->fd);
 		} else {
-			debug("main: I got a NULL whose index is %d.\n", it->first);
+			dbg("main: I got a NULL whose index is %d.\n", it->first);
 		}
-		debug("main: there are %lu objects in map.\n", client_map.size());
+		dbg("main: there are %lu objects in map.\n", client_map.size());
 		sleep(1);
 	}
 	
 	// stop workers
-	debug("main: removing workers...\n");
+	dbg("main: removing workers...\n");
 	for (i = 0; i < NUM_OF_WORKERS; ++i) {
 		workers[i]->can_run = false;
 	}
 	task_queue->increment_count(NUM_OF_WORKERS);
 	for (i = 0; i < NUM_OF_WORKERS; ++i) {
-		debug("main: waiting for worker%d.\n", i);
+		dbg("main: waiting for worker%d.\n", i);
 		workers[i]->th->join();
 		delete workers[i];
 	}

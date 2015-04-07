@@ -6,14 +6,17 @@ PROGNAME = main
 CFLAGS = -pthread
 LIBS = -Linc/ -levent -levent_pthreads -lloci
 INCLUDE_PATH = -I inc/loci/inc
-DEBUG_FLAGS = -g
+DEBUG_FLAGS =
 
 include Makefile.in
 
 all: $(CPP_OBJS) $(HEADERS) $(C99_OBJS)
 	$(GPP) $(DEBUG_FLAGS) $(OPTFLAGS) -o $(PROGNAME) $(CFLAGS) $(INCLUDE_PATH) $(CPP_OBJS) $(C99_OBJS) $(LIBS)
 
-debug: DEBUG_FLAGS += -D_DEBUG -D_COLORFUL
+gdb: DEBUG_FLAGS += -g
+gdb: clean all
+
+debug: DEBUG_FLAGS += -g -D_DEBUG -D_COLORFUL
 debug: clean all
 
 src/stream.o: src/stream.c src/stream.h

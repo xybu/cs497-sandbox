@@ -98,3 +98,14 @@ To some extent, mproxy sees each socket file descriptor as a client regardless o
 # Malicious Template
 
 Currently working on it. Need to define the format, field types, allowed modifications on each field, etc.
+
+# Benchmark
+
+Program before introducing malicious action:
+ * TCP Bandwidth: ~29 Gb / sec (debug mode) to ~31 Gb / sec (normal mode)
+
+Program that dumps OpenFlow message details to stderr:
+ * TCP Bandwidth: 23.8 Gb / sec (debug mode) to 24.7 Gb / sec (normal mode)
+
+Program that uses loci to parse OpenFlow message (no dumping):
+ * TCP Bandwidth: 25.1 Gb / sec (normal mode)
