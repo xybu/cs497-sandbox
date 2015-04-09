@@ -32,7 +32,7 @@ The following table lists the types of attacks and their supported arguments, wh
 | 00 | Drop   | `DROP`    | Drop the message with a specified probability `p`.      | `p=<PROB>`           | Planned |
 | 01 | Delay  | `DELAY`   | Delay the message delivery by `t` milliseconds.         | `t=<INT>`            | Planned |
 | 02 | Duplicate | `DUP`  | Repeatedly send the message `r` times.                  | `r=<INT>`            | Planned |
-| 04 | Modification | `LIE` | TBD.                                                  | TBD.                 | Planned |
+| 03 | Modification | `LIE` | TBD.                                                  | TBD.                 | Planned |
 
 Notes:
  * Could add conditional actions like Dropping the message if a field `f` has value `v` (with alias like `DROPC`).
