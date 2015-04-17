@@ -10,7 +10,8 @@ Each line specifies an attack action, and should have six columns:
  * `LEN`: length of the line. `int` value.
  * `CID`: id of the controller to which the attack is applicable. `int` value or '*' (of value `-1`) meaning applicable to all.
  * `SID`: id of the switch to which the attack is applicable. `int` value or '*' (of value `-1`) meaning applicable to all.
- * `MSG_TYPE`: on what type of message to apply the attack. Either an `int` of OFP message type or a `string` alias of the type defined later.
+ * `OFP_VER`: version of OpenFlow protocol.
+ * `MSG_TYPE`: on what type of message to apply the attack. Either an `int` of OFP message type or a `string` alias of the type defined later. Wildcard `*` has value `0`.
  * `FIELD`: on what field of message to apply the attack. A `string` of format `F1(.Fi)*`. For example, `data.in_addr`.
  * `ATTACK_TYPE`: type of the attack. `uint8_t` value or its `string` alias. Supported values are listed later.
  * `ARGS`: arguments for the attack. `string` of format `field=val(;field=val)*`. Supported fields for each attack type are listed later.
@@ -37,11 +38,18 @@ The following table lists the types of attacks and their supported arguments, wh
 
 Notes:
  * Could add conditional actions like Dropping the message if a field `f` has value `v` (with alias like `DROPC`).
+ * Use ampersand (`&`) to separate arguments (to form a query string format).
+
+## OFP Version
+
+`OFP_VER` column dictates the version of OFP message. It is necessary since same `MSG_TYPE` integer can represent different types in different versions of OFP.
 
 ## Message Types and Fields
 
 A quick summary of OpenFlow message types can be found [here](http://flowgrammable.org/sdn/openflow/message-layer).
-Besides, wildcard char `*` can be used to match messages of any type. 
+Besides, wildcard char `*` can be used to match messages of any type.
+
+If the column `OFP_VER` has value `*`, then only type aliases that are the same across all OFP versions are supported.
 
 The column `FIELD` specifies where to apply an attack. The format is `F1(.Fi)*`. Not all attack types require `FIELD`. For example, if the attack is to modify a field, then the specified field will be modified according to the rule. For the attack types that do not require `FIELD`, `FIELD` will be ignored.
 
