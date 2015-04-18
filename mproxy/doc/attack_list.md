@@ -30,7 +30,7 @@ The following table lists the types of attacks and their supported arguments, wh
 
 | ID | Name   | Alias     | Description                                             | Arguments            | Status  |
 | :--: | ------ | --------- | ------------------------------------------------------- | -------------------- | ------- |
-| 00 | Drop   | `DROP`    | Drop the message with a specified probability `p` (default value: `1.0`).      | `p=<PROB>`           | Working |
+| 00 | Drop   | `DROP`    | Drop the message with a specified probability `p` (default value: `100`).      | `p=<PROB>`           | Working |
 | 01 | Delay  | `DELAY`   | Delay the message delivery by `t` milliseconds.         | `t=<INT>`            | Planned |
 | 02 | Duplicate | `DUP`  | Repeatedly send the message `r` times.                  | `r=<INT>`            | Planned |
 | 03 | Modification | `LIE` | Modify the target field.                              | TBD.                 | Planned |
