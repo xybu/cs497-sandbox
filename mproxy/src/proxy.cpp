@@ -105,7 +105,7 @@ void on_flow_read(struct bufferevent *bev, void *arg) {
 			}
 		}
 		len_processed += ofp_msg_len;
-		dbg(COLOR_YELLOW "on_flow_read: processed %lu / %lu bytes.\n" COLOR_BLACK, len_processed, msg->len);
+		dbg(COLOR_GREEN "on_flow_read: processed %lu / %lu bytes.\n" COLOR_BLACK, len_processed, msg->len);
 	}
 	if (len_processed > 0) stream_left_shift(msg, len_processed);
 	dbg(COLOR_GREEN "on_flow_read: finished handling read event on fd %d.\n" COLOR_BLACK, ((Client *)arg)->fd);
@@ -117,6 +117,7 @@ void on_flow_read(struct bufferevent *bev, void *arg) {
  * EOF = 0x10, unrecoverable rror = 0x20, timeout = 0x40, connect op finished = 0x80.
  */
 void on_flow_error(struct bufferevent *bev, short what, void *arg) {
+	if (what == '\x11') return; // do not report read EOF
 	err(COLOR_RED "on_flow_error: an error occured on fd %d. Err code 0x%x.\n" COLOR_BLACK, ((Client *)arg)->fd, what);
 }
 

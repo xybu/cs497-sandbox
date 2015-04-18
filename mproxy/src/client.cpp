@@ -81,5 +81,7 @@ int Client::init(bufferevent_data_cb on_read, bufferevent_data_cb on_write, buff
 
 	client_map[fd] = this;
 
+	dbg(COLOR_GREEN "Initialized client %d.\n" COLOR_BLACK, fd);
+
 	return STATUS_OK;
 }

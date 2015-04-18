@@ -37,8 +37,10 @@ char **csv_parse(char *data, size_t len, size_t *num_fields) {
 		return NULL;
 	}
 
-	while (1) {
+	while (len > 0) {
 		// skip beginning whitespaces
+		//fprintf(stderr, "len=%lu\n%s\n", len, data);
+
 		while (is_whitespace(*data) && len > 0) ++data, --len;
 		if (len == 0) {
 			*data = '\0';
@@ -57,7 +59,7 @@ char **csv_parse(char *data, size_t len, size_t *num_fields) {
 
 		next_delim = csv_find_next_comma(data, len, quote);
 		if (next_delim != NULL) {
-			len -= next_delim - data - 1;
+			len -= next_delim - data + 1;
 			data = next_delim + 1;
 		} else {
 			// any malformed data will be ignored

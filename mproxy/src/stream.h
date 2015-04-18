@@ -25,6 +25,7 @@ typedef struct stream_s {
 
 #define stream_append2(x, y)	stream_append(x, y->data, y->len)
 
+EXTERNC void memory_dump(unsigned char *p, int len);
 EXTERNC stream_t *stream_new(size_t size);
 EXTERNC void stream_free(stream_t *s);
 EXTERNC int stream_append(stream_t *s, unsigned char *data, size_t len);

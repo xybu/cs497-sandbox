@@ -163,13 +163,14 @@ void attacker_read_rows(char *fpath) {
 			ch = c;
 			stream_append(stream, (unsigned char *)&ch, 1);
 		}
-		if (stream->len > 0 && stream->data[0] != '#') {
-			ch = '\0';
-			stream_append(stream, (unsigned char *)&ch, 1);
+		ch = '\0';
+		stream_append(stream, (unsigned char *)&ch, 1);
+		// stream_dump(stream);
+		if (line_no > 1 && stream->len > 1 && stream->data[0] != '#') {
 			attacker_add_rule(line_no, (char *)stream->data, stream->len);
-			stream->len = 0;
 		}
 		++line_no;
+		stream->len = 0;
 	}
 
 	stream_free(stream);
@@ -188,8 +189,14 @@ int attacker_add_rule(int id, char *data, size_t len) {
 	arg_node_t *args, *targ;
 
 	fields = csv_parse(data, len, &num_fields);
+	/*#ifdef _DEBUG
+	for (i = 0; i < num_fields; ++i) {
+		//csv_unescape(fields[i]);
+		fprintf(stderr, "%d: \"%s\"\n", i, fields[i]);
+	}
+	#endif*/
 	if (num_fields != ATTACKER_ROW_NUM_FIELDS) {
-		err(COLOR_RED "Attack rule %d: insufficient csv fields (%lu / %d).\n" COLOR_BLACK, id, num_fields, ATTACKER_ROW_NUM_FIELDS);
+		err(COLOR_RED "Attack rule %d: csv field count mismatch (%lu / %d).\n" COLOR_BLACK, id, num_fields, ATTACKER_ROW_NUM_FIELDS);
 		csv_free(fields);
 		return 1;
 	}

@@ -37,6 +37,10 @@ stream_t *action_inject(unsigned char *data, uint16_t len) {
 		return NULL;
 	}
 
+	#ifdef _DEBUG
+	memory_dump(data, len);
+	#endif
+
 	if (should_drop_msg(ptmp, ofp_ver, msg_type)) {
 		rnd = rand() % 100;
 		if (rnd < ptmp) {

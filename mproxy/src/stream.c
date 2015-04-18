@@ -17,7 +17,7 @@
 #define SMALLEST_VASCII	32
 #define LARGEST_VASCII	126
 
-static void memory_dump(unsigned char *p, int len) {
+void memory_dump(unsigned char *p, int len) {
 	int i, j;
 	char buf[MAX_DUMP_BYTES + 1]; // buffer for string representation
 	for (i = 0; i < len; ++i){
