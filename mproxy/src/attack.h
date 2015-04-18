@@ -44,7 +44,7 @@
 #define ACTION_ALIAS_DUP		"DUP"
 #define ACTION_ALIAS_LIE		"LIE"
 
-extern float atk_drop_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
+extern char atk_drop_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
 
 /**
  * Normalize version string to an integer. 
@@ -93,6 +93,6 @@ EXTERNC int attacker_add_rule(int id, char *data, size_t len);
  * Determine if the message of version v and type m should be dropped.
  * Store the drop probability to variable s.
  */
-#define attacker_should_drop_msg(s, v, m)	((s = atk_drop_action_table[v - 1][m]))
+#define should_drop_msg(s, v, m)	((s = atk_drop_action_table[v - 1][m]))
 
 #endif

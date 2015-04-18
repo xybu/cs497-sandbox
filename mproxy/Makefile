@@ -44,4 +44,4 @@ valgrind:
 	valgrind -v --leak-check=full --show-leak-kinds=all ./$(PROGNAME)
 
 clean:
-	rm -fv $(PROGNAME) src/*.o
+	rm -fv $(PROGNAME) src/*.o src/*.gcda src/*.gcno

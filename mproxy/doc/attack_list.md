@@ -1,7 +1,7 @@
-Attack Profile
-==============
+Attack List
+===========
 
-This is a tool that transforms the attack specifier CSV to C code.
+TODO: eliminate the use of floating-point numbers.
 
 # CSV Format
 
@@ -23,11 +23,11 @@ Notes:
 
 The following table lists the types of attacks and their supported arguments, where 
 
- * `<PROB>`: a placeholder for a decimal number `x` whose value is in range [0, 1].
+ * `<PROB>`: a placeholder for an integer `x` whose value is in range [0, 100].
  * `<INT>`: a placeholder for an integer like `123`.
- * `<INT[a,b]>`: a placeholder for an integer `x` such that `a<=x<=b`. The range after token `INT` conforms to its mathematical meaning. Other range specifiers include `(a,b)`, `(a,b]`, `[a, b)`. For example, `<INT[1,3]>`.
+ * `<INT[a,b]>`: a placeholder for an integer `x` such that `a<=x<=b`. The range after token `INT` conforms to its mathematical meaning. Other range specifiers include `(a,b)`, `(a,b]`, `[a, b)`. For example, `<INT[0,100]>` is equivalent to `<PROB>`.
  * `<DECIMAL>`: a placeholder for a decimal number like `0.1`.
- * `<DECIMAL[a,b]>`: a placeholder for a decimal number in the specified range. For example, `<DECIMAL[0.0, 1.0]>` is equivalent to `<PROB>`.
+ * `<DECIMAL[a,b]>`: a placeholder for a decimal number in the specified range.
 
 | ID | Name   | Alias     | Description                                             | Arguments            | Status  |
 | :--: | ------ | --------- | ------------------------------------------------------- | -------------------- | ------- |

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include "global.h"
 #include "attack.h"
@@ -7,7 +8,7 @@
 #include "csv.h"
 #include "args.h"
 
-float atk_drop_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
+char atk_drop_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
 
 static char *OFP_V1_0_MSG_ALIAS[] = {
 	"Hello", "Error", "EchoReq", "EchoRes", "Vendor",
@@ -134,6 +135,8 @@ int normalize_action_type(char *s) {
 }
 
 int attacker_init() {
+	// initialize random seed
+	srand(time(NULL));
 	return 0;
 }
 
@@ -211,14 +214,16 @@ int attacker_add_rule(int id, char *data, size_t len) {
 	}
 
 	if (action_type == ACTION_ID_DROP) {
-		float prob = 1;
+		char prob = 100;
 		if ((args = args_parse(fields[7], ATTACKER_ARGS_DELIM))) {
 			if ((targ = args_find(args, "p"))) {
 				if (targ->type == ARG_VALUE_TYPE_INT)
 					prob = targ->value.i;
 				else if (targ->type == ARG_VALUE_TYPE_FLOAT)
-					prob = targ->value.f;
+					prob = (char)targ->value.f;
 			}
+			if (prob < 0) prob = 0;
+			else if (prob > 100) prob = 100;
 			args_free(args);
 		}
 		if (ofp_ver == OFP_VER_ALL) {
@@ -240,12 +245,11 @@ int attacker_add_rule(int id, char *data, size_t len) {
 				atk_drop_action_table[ofp_ver - 1][msg_type] = prob;
 			}
 		}
-		log(COLOR_GREEN "Attack rule %d: accepted DROP rule.\n" COLOR_BLACK, id);
+		log(COLOR_GREEN "Attack rule %d: accepted DROP rule (probability %d%%).\n" COLOR_BLACK, id, prob);
 		#ifdef _DEBUG
 		for (i = 0; i < OFP_VER_MAX; ++i) {
 			for (j = 0; j <= OFP_MSG_TYPE_MAX; ++j) {
-				fprintf(stderr, "%f ", atk_drop_action_table[i][j]);
-				if (j % 10 == 0) fputc('\n', stderr);
+				fprintf(stderr, "%d ", atk_drop_action_table[i][j]);
 			}
 			fputc('\n', stderr);
 		}
