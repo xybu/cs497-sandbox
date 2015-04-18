@@ -19,6 +19,7 @@
 #include "task.h"
 #include "worker.h"
 #include "client.h"
+#include "attack.h"
 
 #ifdef _WIN32
  	#define LIBEVENT_THREAD_INIT	evthread_use_windows_threads
@@ -61,7 +62,7 @@ void parse_fw_host(char *arg, char *hostname, unsigned int *port) {
 }
 
 void parse_profile(char *arg) {
-
+	attacker_read_rows(arg);
 }
 
 void terminate_main(int sig) {
@@ -76,6 +77,10 @@ int main(int argc, char **argv) {
 	unsigned int port = DEFAULT_PORT, fw_port = DEFAULT_FW_PORT;
 	char fw_host[HOST_NAME_MAX + 1] = DEFAULT_FW_HOST;
 	char **tmp, *arg;
+
+	if (attacker_init()) {
+		die(1, "main: failed to attacker list data structure.\n");
+	}
 
 	// parse command-line arguments
 	for (i = 0, tmp = argv; i < argc; ++i, ++tmp) {
