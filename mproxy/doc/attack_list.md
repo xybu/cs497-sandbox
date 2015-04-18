@@ -5,7 +5,7 @@ TODO: eliminate the use of floating-point numbers.
 
 # CSV Format
 
-Each line specifies an attack action, and should have six columns:
+Each non-comment line specifies an attack action, and should have six columns:
 
  * `LEN`: length of the line. `int` value.
  * `CID`: id of the controller to which the attack is applicable. `int` value or '*' (of value `-1`) meaning applicable to all.
@@ -16,8 +16,7 @@ Each line specifies an attack action, and should have six columns:
  * `ATTACK_TYPE`: type of the attack. `uint8_t` value or its `string` alias. Supported values are listed later.
  * `ARGS`: arguments for the attack. `string` of format `field=val(;field=val)*`. Supported fields for each attack type are listed later.
 
-Notes:
- * Should we add a `priority` column?
+A line starting with `#` is a comment line and will be ignored.
 
 ## Attack Types and Arguments
 

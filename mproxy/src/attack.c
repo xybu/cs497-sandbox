@@ -163,7 +163,7 @@ void attacker_read_rows(char *fpath) {
 			ch = c;
 			stream_append(stream, (unsigned char *)&ch, 1);
 		}
-		if (stream->len > 0) {
+		if (stream->len > 0 && stream->data[0] != '#') {
 			ch = '\0';
 			stream_append(stream, (unsigned char *)&ch, 1);
 			attacker_add_rule(line_no, (char *)stream->data, stream->len);

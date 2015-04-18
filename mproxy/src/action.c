@@ -25,12 +25,18 @@ stream_t *action_inject(unsigned char *data, uint16_t len) {
 	size_t current_bytes;
 	unsigned char *buf;
 	stream_t *ret;
-	int ofp_ver;
-	int msg_type;
-	int rnd, ptmp;
+	unsigned int ofp_ver;
+	unsigned int msg_type;
+	unsigned int rnd, ptmp;
 
 	ofp_ver = data[0];
 	msg_type = data[1];
+	
+	if (!is_valid_ofp_header(ofp_ver, msg_type)) {
+		err(COLOR_RED "Got a msg that has invalid version-type pair: (%u, %u).\n" COLOR_BLACK, ofp_ver, msg_type);
+		return NULL;
+	}
+
 	if (should_drop_msg(ptmp, ofp_ver, msg_type)) {
 		rnd = rand() % 100;
 		if (rnd < ptmp) {

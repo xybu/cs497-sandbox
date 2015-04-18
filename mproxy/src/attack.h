@@ -44,6 +44,8 @@
 #define ACTION_ALIAS_DUP		"DUP"
 #define ACTION_ALIAS_LIE		"LIE"
 
+#define is_valid_ofp_header(v, t)	((v <= OFP_VER_MAX) && (t <= OFP_MSG_TYPE_MAX))
+
 extern char atk_drop_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
 
 /**
