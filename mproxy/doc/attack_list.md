@@ -52,7 +52,23 @@ If the column `OFP_VER` has value `*`, then only type aliases that are the same 
 
 The column `FIELD` specifies where to apply an attack. The format is `F1(.Fi)*`. Not all attack types require `FIELD`. For example, if the attack is to modify a field, then the specified field will be modified according to the rule. For the attack types that do not require `FIELD`, `FIELD` will be ignored.
 
-# Example
+# Attack Types
 
-TBA.
+## DROP
+
+Drop the message.
+
+## DUP
+
+Repeatedly send the message `r` times. 
+
+Notes:
+ * If the value of `r` is less than `2`, then the attack is ignored. One should delete the attack rule from rule list, or use `DROP` attack instead.
+
+## DELAY
+
+
+
+## LIE
+
 

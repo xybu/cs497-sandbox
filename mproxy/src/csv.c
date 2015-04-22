@@ -11,9 +11,16 @@
 #define is_newline(c)		(c == '\n' || c == '\r')
 
 char *csv_find_next_comma(char *data, size_t maxlen, char quote) {
+	char *back;
 	while (maxlen > 0) {
 		if (quote == '\0' && *data == ',') {
 			*data = '\0';
+			// remove the whitespaces at the tail
+			back = data - 1;
+			while (is_whitespace(*back)) {
+				*back = '\0';
+				--back;
+			}
 			return data;
 		} else if (quote != '\0' && *data == quote && *(data - 1) != '\\') {
 			// not an escaped quote, close the quote matching
@@ -72,6 +79,7 @@ char **csv_parse(char *data, size_t len, size_t *num_fields) {
 }
 
 void csv_unescape(char *data) {
+	// does NOT transform '\n' to newline char yet.
 	while (*data != '\0') {
 		if (*data == '\\') {
 			*data = *(data + 1);

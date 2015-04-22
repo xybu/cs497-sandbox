@@ -54,4 +54,6 @@
 	#define	dbg(...);
 #endif
 
+typedef unsigned char counter_t;
+
 #endif

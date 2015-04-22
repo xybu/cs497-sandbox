@@ -43,8 +43,10 @@ void on_flow_read(struct bufferevent *bev, void *arg) {
 	size_t bytes_to_read = evbuffer_get_length(input);
 	size_t len_processed = 0;
 	stream_t *msg = ((Client *)arg)->buf;
+	stream_t *response;
 	int fw_fd = ((Client *)arg)->fw_fd;
 	Client *fw_cli = client_map[fw_fd];
+	counter_t dup_count;
 
 	dbg(COLOR_YELLOW "on_flow_read: %lu bytes to read on fd %d.\n" COLOR_BLACK, bytes_to_read, ((Client *)arg)->fd);
 
@@ -88,7 +90,7 @@ void on_flow_read(struct bufferevent *bev, void *arg) {
 			return;
 		}
 		
-		stream_t *response = action_inject(ofp_msg, ofp_msg_len);
+		response = action_inject(ofp_msg, ofp_msg_len, &dup_count);
 		if (response) {
 			if (fw_cli == NULL || !is_valid_fd(fw_fd)) {
 				stream_free(response);
@@ -97,6 +99,11 @@ void on_flow_read(struct bufferevent *bev, void *arg) {
 				return;
 			}
 			evbuffer_add(fw_cli->ev_buf, response->data, response->len);
+			// repeat r times
+			while(dup_count > 0) {
+				evbuffer_add(fw_cli->ev_buf, response->data, response->len);
+				--dup_count;
+			}
 			stream_free(response);
 			if (bufferevent_write_buffer(fw_cli->ev_event, fw_cli->ev_buf)) {
 				err(COLOR_RED "on_flow_read: failed to write to fd %d.\n" COLOR_BLACK, fw_cli->fd);

@@ -10,6 +10,10 @@
 
 char atk_drop_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
 
+// the table stores how many *more* times the message should be sent
+// after the first delivery.
+counter_t atk_dup_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
+
 static char *OFP_V1_0_MSG_ALIAS[] = {
 	"Hello", "Error", "EchoReq", "EchoRes", "Vendor",
 	"FeatureReq", "FeatureRes", "GetConfigReq", "GetConfigRes", "SetConfig",
@@ -261,6 +265,42 @@ int attacker_add_rule(int id, char *data, size_t len) {
 			fputc('\n', stderr);
 		}
 		#endif
+	} else if (action_type == ACTION_ID_DUP) {
+		counter_t dup_count = 1;
+		if ((args = args_parse(fields[7], ATTACKER_ARGS_DELIM))) {
+			if ((targ = args_find(args, "r"))) {
+				if (targ->type == ARG_VALUE_TYPE_INT)
+					dup_count = targ->value.i;
+			}
+			args_free(args);
+		}
+		// r times <=> (r-1) more times
+		dup_count -= 1;
+		if (dup_count < 1) {
+			err(COLOR_RED "Attack rule %d: useless DUP rule.\n" COLOR_BLACK, id);
+			csv_free(fields);
+			return 1;
+		}
+		if (ofp_ver == OFP_VER_ALL) {
+			for (i = 0; i < OFP_VER_MAX; ++i) {
+				if (msg_type == OFP_MSG_TYPE_ALL) {
+					for (j = 0; j <= OFP_MSG_TYPE_MAX; ++j) {
+						atk_dup_action_table[i][j] = dup_count;
+					}
+				} else {
+					atk_dup_action_table[i][msg_type] = dup_count;
+				}
+			}
+		} else {
+			if (msg_type == OFP_MSG_TYPE_ALL) {
+				for (j = 0; j <= OFP_MSG_TYPE_MAX; ++j) {
+					atk_dup_action_table[ofp_ver - 1][j] = dup_count;
+				}
+			} else {
+				atk_dup_action_table[ofp_ver - 1][msg_type] = dup_count;
+			}
+		}
+		log(COLOR_GREEN "Attack rule %d: accepted DUP rule (send %u+1 times).\n" COLOR_BLACK, id, dup_count);
 	} else {
 		err(COLOR_YELLOW "Attack rule %d: unimplemented attack type \"%s\" (%d).\n" COLOR_BLACK, id, fields[6], action_type);
 	}

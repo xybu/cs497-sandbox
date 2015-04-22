@@ -47,6 +47,7 @@
 #define is_valid_ofp_header(v, t)	((v <= OFP_VER_MAX) && (t <= OFP_MSG_TYPE_MAX))
 
 extern char atk_drop_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
+extern counter_t atk_dup_action_table[OFP_VER_MAX][OFP_MSG_TYPE_MAX + 1];
 
 /**
  * Normalize version string to an integer. 
@@ -96,5 +97,11 @@ EXTERNC int attacker_add_rule(int id, char *data, size_t len);
  * Store the drop probability to variable s.
  */
 #define should_drop_msg(s, v, m)	((s = atk_drop_action_table[v - 1][m]))
+
+/**
+ * Determine if the mssage of version v and type m should be duplicated.
+ * Store number of times to dup to variable s.
+ */
+#define should_dup_msg(s, v, m)		((s = atk_dup_action_table[v - 1][m]))
 
 #endif

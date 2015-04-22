@@ -19,7 +19,7 @@ int of_object_writer(void *cookie, const char *fmt, ...) {
 	return ret;
 }
 
-stream_t *action_inject(unsigned char *data, uint16_t len) {
+stream_t *action_inject(unsigned char *data, uint16_t len, counter_t *dup_count) {
 	of_object_t *obj;
 	of_wire_buffer_t *wbuf;
 	size_t current_bytes;
@@ -47,6 +47,13 @@ stream_t *action_inject(unsigned char *data, uint16_t len) {
 			log(COLOR_CYAN "Message of OFP %d, type %d has been dropped. Rand=%d.\n" COLOR_BLACK, ofp_ver, msg_type, rnd);
 			return NULL;
 		}
+	}
+
+	if (should_dup_msg(*dup_count, ofp_ver, msg_type)) {
+		log(COLOR_CYAN "Message of OFP %d, type %d will be sent %u + 1 times.\n" COLOR_BLACK, ofp_ver, msg_type, *dup_count);
+		ret = stream_new(len);
+		stream_append(ret, data, len);
+		return ret;
 	}
 
 	obj = of_object_new_from_message(to_of_message_t(data), len);

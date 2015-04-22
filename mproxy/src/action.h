@@ -10,6 +10,6 @@
 
 #include "stream.h"
 
-EXTERNC stream_t *action_inject(unsigned char *data, uint16_t len);
+EXTERNC stream_t *action_inject(unsigned char *data, uint16_t len, counter_t *dup_count);
 
 #endif
