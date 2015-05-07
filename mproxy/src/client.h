@@ -12,12 +12,14 @@
 #include <unordered_map>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
+#include <pthread.h>
 #include "stream.h"
 
 struct Client {
 public:
 	int fd;
 	int fw_fd;
+	pthread_mutex_t write_mutex;
 	struct event_base *ev_base;
 	struct evbuffer	*ev_buf;
 	struct bufferevent *ev_event;

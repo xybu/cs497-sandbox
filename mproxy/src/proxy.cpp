@@ -237,8 +237,8 @@ void Proxy::stop() {
 
 void Proxy::start_listen() {
 	SockAddr6 in_addr;
-	register socklen_t cli_sock_len = sizeof(SockAddr6);
-	register int in_fd, out_fd;
+	socklen_t cli_sock_len = sizeof(SockAddr6);
+	int in_fd, out_fd;
 	Client *in_cd, *out_cd;
 
 	dbg("listener: started.\n");

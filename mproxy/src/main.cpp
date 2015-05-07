@@ -16,8 +16,6 @@
 #include "global.h"
 #include "main.h"
 #include "proxy.h"
-#include "task.h"
-#include "worker.h"
 #include "client.h"
 #include "attack.h"
 
@@ -122,18 +120,6 @@ int main(int argc, char **argv) {
 	dbg("fw: %s:%u\n", fw_host, fw_port);
 	//dbg("load profile: %s\n", profile_path);
 
-	// instantiate task queue
-	task_queue = new TaskQueue();
-
-	// start workers
-	Worker *workers[NUM_OF_WORKERS];
-	for (i = 0; i < NUM_OF_WORKERS; ++i) {
-		Worker *w = new Worker(i);
-		w->start();
-		workers[i] = w;
-	}
-	log(COLOR_CYAN "main: all workers started.\n" COLOR_BLACK);
-
 	// instantiate proxy
 	try {
 		proxy = new Proxy(port, fw_host, fw_port);
@@ -163,19 +149,6 @@ int main(int argc, char **argv) {
 		dbg("main: there are %lu objects in map.\n", client_map.size());
 		sleep(1);
 	}
-	
-	// stop workers
-	dbg("main: removing workers...\n");
-	for (i = 0; i < NUM_OF_WORKERS; ++i) {
-		workers[i]->can_run = false;
-	}
-	task_queue->increment_count(NUM_OF_WORKERS);
-	for (i = 0; i < NUM_OF_WORKERS; ++i) {
-		dbg("main: waiting for worker%d.\n", i);
-		workers[i]->th->join();
-		delete workers[i];
-	}
-	delete task_queue;
 
 	// free proxy
 	delete proxy;
